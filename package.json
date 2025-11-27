@@ -11,6 +11,13 @@
     "image-processing"
   ],
   "author": "Tugrul Topuz <tugrultopuz@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/tugrul/node-rembg/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tugrul/node-rembg.git"
+  },
   "license": "MIT",
   "dependencies": {
     "onnxruntime-node": "^1.23.2",

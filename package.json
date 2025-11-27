@@ -1,0 +1,19 @@
+{
+  "name": "@tugrul/rembg",
+  "version": "1.0.0",
+  "description": "Background removal using ONNX models",
+  "main": "index.js",
+  "keywords": [
+    "background-removal",
+    "birefnet",
+    "onnx",
+    "u2net",
+    "image-processing"
+  ],
+  "author": "Tugrul Topuz <tugrultopuz@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "onnxruntime-node": "^1.23.2",
+    "sharp": "^0.34.5"
+  }
+}

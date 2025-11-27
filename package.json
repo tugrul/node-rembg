@@ -1,6 +1,6 @@
 {
   "name": "@tugrul/rembg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Background removal using ONNX models",
   "main": "index.js",
   "keywords": [

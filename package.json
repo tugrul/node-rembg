@@ -1,8 +1,10 @@
 {
   "name": "@tugrul/rembg",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Background removal using ONNX models",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
   "keywords": [
     "background-removal",
     "birefnet",
@@ -10,6 +12,9 @@
     "u2net",
     "image-processing"
   ],
+  "scripts": {
+    "build": "tsc"
+  },
   "author": "Tugrul Topuz <tugrultopuz@gmail.com>",
   "bugs": {
     "url": "https://github.com/tugrul/node-rembg/issues"
@@ -21,6 +26,10 @@
   "license": "MIT",
   "dependencies": {
     "onnxruntime-node": "^1.23.2",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3"
   }
 }

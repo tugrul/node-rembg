@@ -1,16 +1,19 @@
 
-const ort = require('onnxruntime-node');
-const sharp = require('sharp');
+import { Tensor } from 'onnxruntime-node';
+import type { InferenceSession } from 'onnxruntime-node';
+import sharp from 'sharp';
 
-
-class BackgroundRemover {
+export class BackgroundRemover {
+    session: InferenceSession;
+    mean: number[];
+    std: number[];
     /**
      * Initalize the base parameters of the target model
-     * @param {ort.InferenceSession} session - onnxruntime inference session
+     * @param {InferenceSession} session - onnxruntime inference session
      * @param {Array<number>} mean - Mean values for normalization [R, G, B]
      * @param {Array<number>} std - Standard deviation values [R, G, B]
      */
-    constructor(session, mean, std) {
+    constructor(session: InferenceSession, mean: number[], std: number[]) {
         this.session = session;
         this.mean = mean;
         this.std = std;
@@ -19,16 +22,20 @@ class BackgroundRemover {
     /**
      * Normalize an image for model input
      * @param {sharp.Sharp} image - Image buffer or path
-     * @returns {ort.Tensor} - Input tensor for ONNX model
+     * @returns {Tensor} - Input tensor for ONNX model
      */
-    async normalize(image) {
-        const [{ 
-            shape: [index, channel, inputHeight, inputWidth] 
-        }] = this.session.inputMetadata;
+    async normalize(image: sharp.Sharp): Promise<Tensor> {
+
+        if (this.session.inputMetadata.length === 0) {
+            throw new Error('inputMetadata shape is not exists');
+        }
+
+        const inputMetadata = this.session.inputMetadata[0] as InferenceSession.TensorValueMetadata;
+        const [index, channel, inputHeight, inputWidth] = inputMetadata.shape;
 
         // Resize and convert image to RGB
         const { data, info: {width, height, channels} } = await image
-            .resize(inputWidth, inputHeight, { fit: 'fill' })
+            .resize(inputWidth as number, inputHeight as number, { fit: 'fill' })
             .raw()
             .toBuffer({ resolveWithObject: true });
 
@@ -61,7 +68,7 @@ class BackgroundRemover {
             }
         }
 
-        return new ort.Tensor('float32', normalized, [1, 3, height, width]);
+        return new Tensor('float32', normalized, [1, 3, height, width]);
     }
 
     /**
@@ -69,7 +76,7 @@ class BackgroundRemover {
      * @param {sharp.Sharp} image - The input image 
      * @returns {Promise<sharp.Sharp>} - Masked image
      */
-    async mask(image) {
+    async mask(image: sharp.Sharp): Promise<sharp.Sharp> {
 
         // Get original image dimensions
         const {
@@ -91,7 +98,7 @@ class BackgroundRemover {
         const sliceData = new Float32Array(height * width);
         
         for (let i = 0; i < height * width; i++) {
-            sliceData[i] = predData[i];
+            sliceData[i] = predData[i] as number;
         }
 
         // Find min and max
@@ -130,6 +137,3 @@ class BackgroundRemover {
             .png();
     }
 }
-
-module.exports = BackgroundRemover;
-

@@ -11,10 +11,10 @@ npm install @tugrul/rembg
 ## Usage
 
 ```javascript
-const ort = require('onnxruntime-node');
-const sharp = require('sharp');
+import ort from 'onnxruntime-node';
+import sharp from 'sharp';
 
-const BackgroundRemover = require('@tugrul/rembg');
+import { BackgroundRemover } from '@tugrul/rembg';
 
 async function main(inputPath, outputPath) {
   const session = await ort.InferenceSession.create('./models/u2net_human_seg.onnx');

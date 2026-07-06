@@ -39,6 +39,11 @@ export class BackgroundRemover {
             .raw()
             .toBuffer({ resolveWithObject: true });
 
+        // Validate that image is RGB (3 channels)
+        if (channels !== 3) {
+            throw new Error(`Expected RGB image with 3 channels, got ${channels} channels`);
+        }
+
         // Convert to float array and normalize to [0, 1]
         const floatArray = new Float32Array(data.length);
         let maxVal = 0;

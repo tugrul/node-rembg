@@ -94,51 +94,58 @@ export class BackgroundRemover {
         // Normalize and prepare input
         const inputTensor = await this.normalize(image.clone());
 
-        // Run inference
-        const results = await this.session.run({ [inputName]: inputTensor });
-        const outputName = this.session.outputNames[0];
+        try {
+            // Run inference
+            const results = await this.session.run({ [inputName]: inputTensor });
+            const outputName = this.session.outputNames[0];
 
-        // Extract prediction data: shape should be [1, 1, 320, 320]
-        const {data: predData, dims: [index, channel, height, width]} = results[outputName];
-        const sliceData = new Float32Array(height * width);
-        
-        for (let i = 0; i < height * width; i++) {
-            sliceData[i] = predData[i] as number;
+            // Extract prediction data: shape should be [1, 1, 320, 320]
+            const {data: predData, dims: [index, channel, height, width]} = results[outputName];
+            const sliceData = new Float32Array(height * width);
+            
+            for (let i = 0; i < height * width; i++) {
+                sliceData[i] = predData[i] as number;
+            }
+
+            // Find min and max
+            let ma = -Infinity;
+            let mi = Infinity;
+            for (let i = 0; i < sliceData.length; i++) {
+                if (sliceData[i] > ma) { ma = sliceData[i]; } 
+                if (sliceData[i] < mi) { mi = sliceData[i]; }
+            }
+
+            // Normalize to [0, 1]
+            const normalizedData = new Float32Array(sliceData.length);
+            const range = ma - mi;
+            for (let i = 0; i < sliceData.length; i++) {
+                normalizedData[i] = (sliceData[i] - mi) / range;
+            }
+
+            // Clip to [0, 1] and convert to uint8 [0, 255]
+            const uint8Data = new Uint8Array(normalizedData.length);
+            for (let i = 0; i < normalizedData.length; i++) {
+                const clipped = Math.max(0, Math.min(1, normalizedData[i]));
+                uint8Data[i] = Math.round(clipped * 255);
+            }
+
+            // Create image from array and resize to original dimensions
+            const alpha = await sharp(Buffer.from(uint8Data), { raw: { width: width, height: height, channels: 1 } })
+                .resize(originalWidth, originalHeight, { fit: 'fill' })
+                .toColourspace('b-w')
+                .toBuffer();
+
+            return image
+                .clone()
+                .ensureAlpha()
+                .toColourspace('rgb')
+                .joinChannel(alpha, { raw: { width: originalWidth, height: originalHeight, channels: 1 } })
+                .png();
+        } finally {
+            // Dispose tensors to prevent memory leaks
+            if (inputTensor && typeof inputTensor.dispose === 'function') {
+                inputTensor.dispose();
+            }
         }
-
-        // Find min and max
-        let ma = -Infinity;
-        let mi = Infinity;
-        for (let i = 0; i < sliceData.length; i++) {
-            if (sliceData[i] > ma) { ma = sliceData[i]; } 
-            if (sliceData[i] < mi) { mi = sliceData[i]; }
-        }
-
-        // Normalize to [0, 1]
-        const normalizedData = new Float32Array(sliceData.length);
-        const range = ma - mi;
-        for (let i = 0; i < sliceData.length; i++) {
-            normalizedData[i] = (sliceData[i] - mi) / range;
-        }
-
-        // Clip to [0, 1] and convert to uint8 [0, 255]
-        const uint8Data = new Uint8Array(normalizedData.length);
-        for (let i = 0; i < normalizedData.length; i++) {
-            const clipped = Math.max(0, Math.min(1, normalizedData[i]));
-            uint8Data[i] = Math.round(clipped * 255);
-        }
-
-        // Create image from array and resize to original dimensions
-        const alpha = await sharp(Buffer.from(uint8Data), { raw: { width: width, height: height, channels: 1 } })
-            .resize(originalWidth, originalHeight, { fit: 'fill' })
-            .toColourspace('b-w')
-            .toBuffer();
-
-        return image
-            .clone()
-            .ensureAlpha()
-            .toColourspace('rgb')
-            .joinChannel(alpha, { raw: { width: originalWidth, height: originalHeight, channels: 1 } })
-            .png();
     }
 }

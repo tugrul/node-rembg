@@ -27,7 +27,7 @@ export class BackgroundRemover {
     async normalize(image: sharp.Sharp): Promise<Tensor> {
 
         if (this.session.inputMetadata.length === 0) {
-            throw new Error('inputMetadata shape is not exists');
+            throw new Error('inputMetadata does not exist');
         }
 
         const inputMetadata = this.session.inputMetadata[0] as InferenceSession.TensorValueMetadata;
